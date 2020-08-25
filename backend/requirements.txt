@@ -1,0 +1,5 @@
+fastapi[all]
+uvicorn
+databases[sqlite]
+short_url
+sqlalchemy
