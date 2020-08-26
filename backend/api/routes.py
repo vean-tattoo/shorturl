@@ -24,6 +24,7 @@ async def create_url(url):
 
 @router.post('/generate', response_model=Url)
 async def generate_url(data: UrlIn):
+    if not data.url: raise HTTPException(400, "No url provided")
     return await create_url(data.url)
 
 
