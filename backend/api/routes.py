@@ -39,6 +39,7 @@ async def redirect_by_hash(short_code: str):
         "SELECT urls.url FROM urls WHERE urls.short_code = :short_code", 
         {"short_code": short_code}
     )
-    if result:
-        return RedirectResponse(url=result[0])
-    raise HTTPException(404)
+    try:
+        return RedirectResponse(url=result.get('url'))
+    except:
+        raise HTTPException(404)
