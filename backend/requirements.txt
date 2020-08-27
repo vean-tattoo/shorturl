@@ -1,5 +1,5 @@
 fastapi[all]
 uvicorn
-databases[sqlite]
+databases[postgresql]
 short_url
 sqlalchemy
