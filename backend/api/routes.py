@@ -1,45 +1,49 @@
-import datetime
-from sqlalchemy import select
+import uuid
 from fastapi import APIRouter, HTTPException
 from starlette.responses import RedirectResponse
-from sqlite3 import IntegrityError
+from sqlalchemy.exc import IntegrityError
+from urllib.parse import urlparse
+from sqlalchemy import select
+
 from .config import urls, database
 from .models import UrlIn, Url
-from short_url import encode_url
-from typing import List
 
 router = APIRouter()
 
-def get_current_time():
-    return encode_url(int(datetime.datetime.now().timestamp()))
+
+def is_valid_url(url):
+    try:
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+    except ValueError:
+        return False
+
 
 async def create_url(url):
+    short_code = str(uuid.uuid4())[
+        :8
+    ]  # Using UUID for a more unique short_code
+    query = urls.insert().values(url=url, short_code=short_code)
     try:
-        short_code = get_current_time()
-        query = urls.insert().values(url=url, short_code=short_code)
         _id = await database.execute(query)
         return Url(id=_id, url=url, short_code=short_code)
     except IntegrityError:
-        return await create_url(url)
+        return HTTPException(500, "An error occurred, please try again later")
 
-@router.post('/generate', response_model=Url)
+
+@router.post("/generate", response_model=Url)
 async def generate_url(data: UrlIn):
-    if not data.url: raise HTTPException(400, "No url provided")
+    if not data.url or not is_valid_url(data.url):
+        raise HTTPException(400, "Invalid URL provided")
+
     return await create_url(data.url)
 
 
-# @router.get('/list', response_model=List[Url])
-# async def list_urls():
-#     query = urls.select()
-#     return await database.fetch_all(query)
-
-@router.get('/{short_code}')
+@router.get("/{short_code}")
 async def redirect_by_hash(short_code: str):
-    result = await database.fetch_one(
-        "SELECT urls.url FROM urls WHERE urls.short_code = :short_code", 
-        {"short_code": short_code}
-    )
-    try:
-        return RedirectResponse(url=result.get('url'))
-    except:
-        raise HTTPException(404)
+    query = select([urls]).where(urls.c.short_code == short_code)
+    result = await database.fetch_one(query)
+    if not result:
+        raise HTTPException(404, "URL not found")
+
+    return RedirectResponse(url=result["url"])

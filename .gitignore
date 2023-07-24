@@ -2,3 +2,4 @@
 .vscode/
 node_modules/
 db.db
+__pycache__
