@@ -1,5 +1,6 @@
-fastapi==0.100.0
-uvicorn==0.23.1
-databases[asyncpg]==0.7.0
-sqlalchemy==1.4.48
-psycopg2-binary==2.9.6
+fastapi==0.115.6
+uvicorn==0.32.1
+databases[asyncpg]==0.9.0
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.10
+APScheduler==3.11.0
